@@ -6,16 +6,16 @@ AgentPair orchestrates pair programming sessions between AI agents. One agent wo
 
 ## Features
 
-- **Paired mode**: Claude and Codex work together, one implements while the other reviews
-- **Single-agent mode**: Run `--claude-only` or `--codex-only` for simpler tasks
-- **Bridge communication**: JSONL-based messaging with SHA256 deduplication
-- **MCP integration**: Agents communicate via Model Context Protocol tools
-- **Review modes**: `claude`, `codex`, or `claudex` (both review)
-- **tmux support**: Side-by-side terminal panes for watching agents work
-- **Git worktree isolation**: Each run can use an isolated worktree
-- **Session persistence**: Resume runs from any state
-- **Live dashboard**: Monitor active runs in real-time
-- **Auto-update**: Self-updating binary
+- 🤝 **Paired mode**: Claude and Codex work together, one implements while the other reviews
+- 👤 **Single-agent mode**: Run `--claude-only` or `--codex-only` for simpler tasks
+- 🌉 **Bridge communication**: JSONL-based messaging with SHA256 deduplication
+- 🔌 **MCP integration**: Agents communicate via Model Context Protocol tools
+- 🔍 **Review modes**: `claude`, `codex`, or `claudex` (both review)
+- 🖥️ **tmux support**: Side-by-side terminal panes for watching agents work
+- 🌲 **Git worktree isolation**: Each run can use an isolated worktree
+- 💾 **Session persistence**: Resume runs from any state
+- 📊 **Live dashboard**: Monitor active runs in real-time
+- 🔄 **Auto-update**: Self-updating binary
 
 ## Installation
 
