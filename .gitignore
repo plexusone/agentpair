@@ -30,3 +30,6 @@ Thumbs.db
 
 # Nested git repos
 agentpair/.git/
+
+# MkDocs build output
+/site/
