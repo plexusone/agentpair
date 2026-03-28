@@ -38,8 +38,8 @@ func (s *Session) Create(ctx context.Context) error {
 
 	// Create new session (detached)
 	cmd := exec.CommandContext(ctx, "tmux", "new-session",
-		"-d",           // detached
-		"-s", s.name,   // session name
+		"-d",         // detached
+		"-s", s.name, // session name
 		"-c", s.workDir, // working directory
 	)
 	if err := cmd.Run(); err != nil {
@@ -54,8 +54,8 @@ func (s *Session) Create(ctx context.Context) error {
 func (s *Session) SetupLayout(ctx context.Context) error {
 	// Split window horizontally (side by side)
 	cmd := exec.CommandContext(ctx, "tmux", "split-window",
-		"-h",           // horizontal split
-		"-t", s.name,   // target session
+		"-h",         // horizontal split
+		"-t", s.name, // target session
 		"-c", s.workDir, // working directory
 	)
 	if err := cmd.Run(); err != nil {

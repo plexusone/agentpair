@@ -122,8 +122,8 @@ func TestManifestLoadNotExist(t *testing.T) {
 
 func TestManifestSetState(t *testing.T) {
 	tests := []struct {
-		name          string
-		state         State
+		name           string
+		state          State
 		expectComplete bool
 	}{
 		{"submitted", StateSubmitted, false},

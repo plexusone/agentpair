@@ -89,7 +89,7 @@ use_tmux: true
 verbose: true
 timeout: 30m
 `
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -130,7 +130,7 @@ func TestLoadConfigFromPath_JSON(t *testing.T) {
   "max_iterations": 100,
   "review_mode": "claudex"
 }`
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 

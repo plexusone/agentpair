@@ -263,5 +263,5 @@ func SaveConfigToPath(path string, cfg *FileConfig) error {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0600)
 }

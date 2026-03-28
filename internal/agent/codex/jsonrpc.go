@@ -101,11 +101,11 @@ type ExecuteParams struct {
 
 // ExecuteResult from the execute method.
 type ExecuteResult struct {
-	Output     string          `json:"output"`
-	Done       bool            `json:"done"`
-	ToolCalls  []ToolCall      `json:"toolCalls,omitempty"`
-	Statistics *Statistics     `json:"statistics,omitempty"`
-	Metadata   map[string]any  `json:"metadata,omitempty"`
+	Output     string         `json:"output"`
+	Done       bool           `json:"done"`
+	ToolCalls  []ToolCall     `json:"toolCalls,omitempty"`
+	Statistics *Statistics    `json:"statistics,omitempty"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
 }
 
 // ToolCall represents a tool invocation.

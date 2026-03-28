@@ -21,10 +21,10 @@ func TestMachineTransitions(t *testing.T) {
 		{"reviewing to working", StateReviewing, StateWorking, false},
 		{"reviewing to complete", StateReviewing, StateComplete, false},
 		{"reviewing to failed", StateReviewing, StateFailed, false},
-		{"complete to working", StateComplete, StateWorking, true},  // Invalid
+		{"complete to working", StateComplete, StateWorking, true}, // Invalid
 		{"failed to working", StateFailed, StateWorking, true},     // Invalid
-		{"init to complete", StateInit, StateComplete, true},        // Invalid
-		{"init to reviewing", StateInit, StateReviewing, true},      // Invalid
+		{"init to complete", StateInit, StateComplete, true},       // Invalid
+		{"init to reviewing", StateInit, StateReviewing, true},     // Invalid
 	}
 
 	for _, tt := range tests {

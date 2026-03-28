@@ -45,9 +45,9 @@ func (l *Layout) TripleLayout(ctx context.Context) error {
 	// Split bottom for status pane
 	target := fmt.Sprintf("%s:0.0", l.session.Name())
 	cmd := exec.CommandContext(ctx, "tmux", "split-window",
-		"-v",           // vertical split
+		"-v", // vertical split
 		"-t", target,
-		"-p", "20",     // 20% height
+		"-p", "20", // 20% height
 		"-c", l.session.workDir,
 	)
 	if err := cmd.Run(); err != nil {

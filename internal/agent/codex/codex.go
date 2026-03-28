@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+
 	"github.com/plexusone/agentpair/internal/agent"
 	"github.com/plexusone/agentpair/internal/bridge"
 )

@@ -44,9 +44,9 @@ type InitPayload struct {
 
 // MCPServer represents an MCP server configuration.
 type MCPServer struct {
-	Name    string `json:"name"`
-	Command string `json:"command"`
-	Args    []string `json:"args,omitempty"`
+	Name    string            `json:"name"`
+	Command string            `json:"command"`
+	Args    []string          `json:"args,omitempty"`
 	Env     map[string]string `json:"env,omitempty"`
 }
 
