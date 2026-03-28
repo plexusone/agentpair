@@ -1,6 +1,6 @@
 module github.com/plexusone/agentpair
 
-go 1.26.1
+go 1.25.0
 
 require (
 	github.com/coder/websocket v1.8.14
