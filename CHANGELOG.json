@@ -1,0 +1,65 @@
+{
+  "irVersion": "1.0",
+  "project": "agentpair",
+  "repository": "https://github.com/plexusone/agentpair",
+  "versioning": "semver",
+  "commitConvention": "conventional",
+  "maintainers": ["plexusone"],
+  "releases": [
+    {
+      "version": "v0.1.0",
+      "date": "2026-03-28",
+      "highlights": [
+        { "description": "Initial release of AgentPair - a Go implementation of agent-to-agent pair programming between Claude and Codex" },
+        { "description": "Paired and single-agent execution modes with JSONL bridge communication and MCP tool integration" },
+        { "description": "Full workspace support including tmux side-by-side panes and git worktree isolation" }
+      ],
+      "added": [
+        { "description": "Agent interface with Claude and Codex implementations", "commit": "834225e" },
+        { "description": "Claude CLI wrapper using NDJSON protocol", "commit": "834225e" },
+        { "description": "Codex App Server client using JSON-RPC 2.0", "commit": "834225e" },
+        { "description": "JSONL-based bridge for agent-to-agent messaging with SHA256 deduplication", "commit": "938c7e8" },
+        { "description": "MCP server exposing bridge tools: `send_to_agent`, `receive_messages`, `bridge_status`", "commit": "938c7e8" },
+        { "description": "Orchestration loop with state machine: init → working → reviewing → complete", "commit": "4814c94" },
+        { "description": "Single-agent mode via `--claude-only` and `--codex-only` flags", "commit": "4814c94" },
+        { "description": "Review modes: `claude`, `codex`, or `claudex` (consensus)", "commit": "d66a0ed" },
+        { "description": "PASS/FAIL/DONE signal parsing for loop control", "commit": "d66a0ed" },
+        { "description": "Run persistence with manifest.json, bridge.jsonl, and transcript.jsonl", "commit": "b82aeab" },
+        { "description": "Resume runs via `--run-id` or `--session` flags", "commit": "b82aeab" },
+        { "description": "tmux session management with side-by-side Claude/Codex panes", "commit": "9a5daa4" },
+        { "description": "Git worktree automation for isolated run environments", "commit": "4c6ed64" },
+        { "description": "Live dashboard showing active runs", "commit": "b3b2bc3" },
+        { "description": "Auto-update mechanism for self-updating binary", "commit": "b0e77ed" },
+        { "description": "Structured logging via slog with context-based logger retrieval", "commit": "13bebf7" },
+        { "description": "Configuration file support (YAML/JSON) at `~/.agentpair/config.yaml`", "commit": "41176c1" },
+        { "description": "JSONL utilities package for reading/writing newline-delimited JSON", "commit": "42db61f" },
+        { "description": "Cobra-based CLI with all flags and subcommands", "commit": "a2b654f" }
+      ],
+      "documentation": [
+        { "description": "README with installation, usage, and architecture overview", "commit": "031cd68" },
+        { "description": "MkDocs documentation site with Material theme", "commit": "3c3140b" },
+        { "description": "Getting started guides: installation, quick start, configuration", "commit": "3c3140b" },
+        { "description": "Concept explanations: architecture, state machine, bridge, MCP", "commit": "3c3140b" },
+        { "description": "User guides: paired sessions, single-agent, tmux, worktrees, resuming", "commit": "3c3140b" },
+        { "description": "Reference documentation: CLI, config file, message format", "commit": "3c3140b" }
+      ],
+      "tests": [
+        { "description": "Unit tests for pkg/jsonl", "commit": "42db61f" },
+        { "description": "Unit tests for internal/bridge", "commit": "938c7e8" },
+        { "description": "Unit tests for internal/config", "commit": "41176c1" },
+        { "description": "Unit tests for internal/review", "commit": "d66a0ed" },
+        { "description": "Unit tests for internal/run (manifest, transcript, manager)", "commit": "b82aeab" },
+        { "description": "Unit tests for internal/loop/state", "commit": "4814c94" },
+        { "description": "Unit tests for internal/logger", "commit": "13bebf7" },
+        { "description": "Unit tests for internal/tmux", "commit": "9a5daa4" },
+        { "description": "Unit tests for internal/worktree", "commit": "4c6ed64" }
+      ],
+      "dependencies": [
+        { "description": "`github.com/spf13/cobra` v1.10.2 for CLI framework", "commit": "5bf2608" },
+        { "description": "`github.com/coder/websocket` v1.8.14 for WebSocket client/server", "commit": "5bf2608" },
+        { "description": "`github.com/modelcontextprotocol/go-sdk` v1.4.1 for MCP integration", "commit": "5bf2608" },
+        { "description": "`go.yaml.in/yaml/v3` v3.0.4 for YAML configuration", "commit": "5bf2608" }
+      ]
+    }
+  ]
+}
