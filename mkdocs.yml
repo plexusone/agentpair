@@ -1,0 +1,71 @@
+site_name: AgentPair
+site_description: Agent-to-agent pair programming between Claude and Codex
+site_url: https://plexusone.github.io/agentpair
+repo_url: https://github.com/plexusone/agentpair
+repo_name: plexusone/agentpair
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+      - Configuration: getting-started/configuration.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+      - State Machine: concepts/state-machine.md
+      - Bridge: concepts/bridge.md
+      - MCP Integration: concepts/mcp.md
+  - Guides:
+      - Paired Sessions: guides/paired-sessions.md
+      - Single-Agent Mode: guides/single-agent.md
+      - tmux Layout: guides/tmux.md
+      - Git Worktrees: guides/worktrees.md
+      - Resuming Runs: guides/resuming.md
+  - Reference:
+      - CLI: reference/cli.md
+      - Config File: reference/config.md
+      - Bridge Messages: reference/messages.md
