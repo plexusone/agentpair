@@ -69,3 +69,5 @@ nav:
       - CLI: reference/cli.md
       - Config File: reference/config.md
       - Bridge Messages: reference/messages.md
+  - Releases:
+      - v0.1.0: releases/v0.1.0.md
