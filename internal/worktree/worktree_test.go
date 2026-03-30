@@ -13,9 +13,9 @@ func TestGenerateWorktreePath(t *testing.T) {
 		runID    int
 		expected string
 	}{
-		{"/home/user/myrepo", 1, "/home/user/.agentpair-worktree-1"},
-		{"/home/user/myrepo", 5, "/home/user/.agentpair-worktree-5"},
-		{"/projects/go/src/app", 100, "/projects/go/src/.agentpair-worktree-100"},
+		{filepath.Join("home", "user", "myrepo"), 1, filepath.Join("home", "user", ".agentpair-worktree-1")},
+		{filepath.Join("home", "user", "myrepo"), 5, filepath.Join("home", "user", ".agentpair-worktree-5")},
+		{filepath.Join("projects", "go", "src", "app"), 100, filepath.Join("projects", "go", "src", ".agentpair-worktree-100")},
 	}
 
 	for _, tt := range tests {
