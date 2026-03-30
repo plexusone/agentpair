@@ -7,10 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os/exec"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/grokify/mogo/log/slogutil"
 
 	"github.com/plexusone/agentpair/internal/agent"
 	"github.com/plexusone/agentpair/internal/bridge"
@@ -97,9 +100,14 @@ func (a *Agent) Start(ctx context.Context) error {
 	a.running = true
 	a.state = agent.StateRunning
 
-	// Start goroutine to wait for process exit
+	// Start goroutine to wait for process exit.
+	// Note: ctx may be cancelled by the time the process exits, in which case
+	// slogutil.LoggerFromContext returns a default logger.
 	go func() {
-		a.cmd.Wait()
+		if err := a.cmd.Wait(); err != nil {
+			logger := slogutil.LoggerFromContext(ctx, slog.Default())
+			logger.Debug("claude process exited with error", "error", err)
+		}
 		a.mu.Lock()
 		a.running = false
 		a.state = agent.StateStopped
@@ -219,7 +227,10 @@ func (a *Agent) Execute(ctx context.Context, msgs []*bridge.Message) (*agent.Res
 					RequestID: payload.RequestID,
 				})
 				msgBytes, _ := approveMsg.Encode()
-				a.stdin.Write(append(msgBytes, '\n'))
+				if _, err := a.stdin.Write(append(msgBytes, '\n')); err != nil {
+					logger := slogutil.LoggerFromContext(ctx, slog.Default())
+					logger.Warn("failed to send auto-approve", "error", err)
+				}
 			}
 
 		case TypeError:
@@ -244,6 +255,7 @@ func (a *Agent) Execute(ctx context.Context, msgs []*bridge.Message) (*agent.Res
 
 // Stop gracefully stops the Claude agent.
 func (a *Agent) Stop(ctx context.Context) error {
+	logger := slogutil.LoggerFromContext(ctx, slog.Default())
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -253,10 +265,12 @@ func (a *Agent) Stop(ctx context.Context) error {
 
 	a.state = agent.StateStopping
 
-	// Send stop message
+	// Send stop message (best-effort, process may already be exiting)
 	stopMsg, _ := NewMessage(TypeStop, nil)
 	msgBytes, _ := stopMsg.Encode()
-	a.stdin.Write(append(msgBytes, '\n'))
+	if _, err := a.stdin.Write(append(msgBytes, '\n')); err != nil {
+		logger.Debug("failed to send stop message", "error", err)
+	}
 
 	// Close stdin to signal EOF
 	a.stdin.Close()
@@ -268,13 +282,17 @@ func (a *Agent) Stop(ctx context.Context) error {
 	case <-ctx.Done():
 		// Force kill if context cancelled
 		if a.cmd.Process != nil {
-			a.cmd.Process.Kill()
+			if err := a.cmd.Process.Kill(); err != nil {
+				logger.Debug("failed to kill process", "error", err)
+			}
 		}
 		return ctx.Err()
 	case <-time.After(5 * time.Second):
 		// Force kill after timeout
 		if a.cmd.Process != nil {
-			a.cmd.Process.Kill()
+			if err := a.cmd.Process.Kill(); err != nil {
+				logger.Debug("failed to kill process after timeout", "error", err)
+			}
 		}
 		return nil
 	}

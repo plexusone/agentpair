@@ -71,8 +71,10 @@ func (a *Agent) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to codex server: %w", err)
 	}
 
-	// Start message reader
-	go a.readMessages()
+	// Start message reader.
+	// Note: readMessages uses context.Background() internally for long-lived reads
+	// because the reader goroutine outlives individual request contexts.
+	go a.readMessages() //nolint:gosec
 
 	// Initialize session
 	initReq := NewRequest(MethodInitialize, &InitializeParams{
@@ -143,8 +145,13 @@ func (a *Agent) handleNotification(notif *Notification) {
 	case NotifyCommandRequest:
 		if a.config.AutoApprove {
 			var params CommandRequestParams
-			data, _ := json.Marshal(notif.Params)
-			json.Unmarshal(data, &params)
+			data, err := json.Marshal(notif.Params)
+			if err != nil {
+				return // Can't marshal params, skip auto-approve
+			}
+			if err := json.Unmarshal(data, &params); err != nil {
+				return // Can't unmarshal params, skip auto-approve
+			}
 
 			approveReq := NewRequest(MethodApproveCommand, &ApproveCommandParams{
 				RequestID: params.RequestID,
@@ -157,8 +164,13 @@ func (a *Agent) handleNotification(notif *Notification) {
 	case NotifyFileRequest:
 		if a.config.AutoApprove {
 			var params FileRequestParams
-			data, _ := json.Marshal(notif.Params)
-			json.Unmarshal(data, &params)
+			data, err := json.Marshal(notif.Params)
+			if err != nil {
+				return // Can't marshal params, skip auto-approve
+			}
+			if err := json.Unmarshal(data, &params); err != nil {
+				return // Can't unmarshal params, skip auto-approve
+			}
 
 			approveReq := NewRequest(MethodApproveFile, &ApproveFileParams{
 				RequestID: params.RequestID,
@@ -214,9 +226,15 @@ func (a *Agent) sendRequest(ctx context.Context, req *Request) (*Response, error
 	}
 }
 
+// sendRequestAsync sends a request without waiting for response.
+// Errors are intentionally not returned as this is fire-and-forget for auto-approve.
 func (a *Agent) sendRequestAsync(req *Request) {
-	data, _ := json.Marshal(req)
-	a.conn.Write(context.Background(), websocket.MessageText, data)
+	data, err := json.Marshal(req)
+	if err != nil {
+		return // Can't marshal, skip sending
+	}
+	// Best-effort send; error ignored as this is fire-and-forget
+	_ = a.conn.Write(context.Background(), websocket.MessageText, data)
 }
 
 // Execute sends messages to Codex and waits for a result.

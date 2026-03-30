@@ -3,7 +3,10 @@ package tmux
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os/exec"
+
+	"github.com/grokify/mogo/log/slogutil"
 )
 
 // Layout represents a tmux pane layout configuration.
@@ -55,7 +58,10 @@ func (l *Layout) TripleLayout(ctx context.Context) error {
 	}
 
 	// Rename the status pane
-	l.session.RenamePane(ctx, 2, "status")
+	if err := l.session.RenamePane(ctx, 2, "status"); err != nil {
+		logger := slogutil.LoggerFromContext(ctx, slog.Default())
+		logger.Warn("failed to rename status pane", "error", err)
+	}
 
 	return nil
 }

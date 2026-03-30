@@ -1,4 +1,24 @@
 // Package loop provides the main orchestration for agent-to-agent pair programming.
+//
+// # Error Handling
+//
+// This package distinguishes between critical and non-critical errors:
+//
+// Critical errors cause the loop to fail and return immediately:
+//   - Agent execution failures (primary or secondary agent cannot execute)
+//   - Message draining failures (cannot retrieve messages from bridge)
+//   - MCP server startup failures
+//   - Agent startup failures
+//
+// Non-critical errors are logged as warnings but allow the loop to continue:
+//   - Transcript logging failures (recording events to transcript.jsonl)
+//   - Run save failures (persisting manifest state)
+//   - State transition failures (updating internal state machine)
+//   - Signal logging failures (recording done/review signals)
+//
+// This design ensures the core orchestration continues even if auxiliary
+// persistence or logging operations fail, while stopping immediately on
+// errors that would prevent meaningful progress.
 package loop
 
 import (
@@ -8,6 +28,8 @@ import (
 	"log/slog"
 	"sync"
 	"time"
+
+	"github.com/grokify/mogo/log/slogutil"
 
 	"github.com/plexusone/agentpair/internal/agent"
 	"github.com/plexusone/agentpair/internal/bridge"
@@ -62,11 +84,13 @@ func (l *Loop) Run(ctx context.Context) error {
 		"max_iterations", l.cfg.MaxIterations)
 
 	// Log start
-	l.run.Transcript.LogStart(l.cfg.Prompt, map[string]any{
+	if err := l.run.Transcript.LogStart(l.cfg.Prompt, map[string]any{
 		"primary_agent":  l.primary.Name(),
 		"review_mode":    l.cfg.ReviewMode,
 		"max_iterations": l.cfg.MaxIterations,
-	})
+	}); err != nil {
+		l.log.Warn("failed to log start to transcript", "error", err)
+	}
 
 	// Start MCP server for bridge tools
 	if err := l.startMCPServer(ctx); err != nil {
@@ -87,8 +111,12 @@ func (l *Loop) Run(ctx context.Context) error {
 		return err
 	}
 	l.run.Manifest.SetState(run.StateWorking)
-	l.run.Transcript.LogState(run.StateWorking)
-	l.run.Save()
+	if err := l.run.Transcript.LogState(run.StateWorking); err != nil {
+		l.log.Warn("failed to log state to transcript", "error", err)
+	}
+	if err := l.run.Save(); err != nil {
+		l.log.Warn("failed to save run", "error", err)
+	}
 
 	// Send initial task to primary agent
 	initialMsg := bridge.NewTaskMessage("system", l.primary.Name(), l.cfg.Prompt)
@@ -110,16 +138,24 @@ func (l *Loop) Run(ctx context.Context) error {
 		iterLog.Info("starting iteration")
 
 		l.run.Manifest.IncrementIteration()
-		l.run.Transcript.LogIteration(l.iteration)
+		if err := l.run.Transcript.LogIteration(l.iteration); err != nil {
+			iterLog.Warn("failed to log iteration to transcript", "error", err)
+		}
 
 		done, err := l.executeIteration(ctx)
 		if err != nil {
 			iterLog.Error("iteration failed", "error", err)
-			l.run.Transcript.LogError("loop", l.iteration, err)
-			l.machine.Transition(StateFailed)
+			if logErr := l.run.Transcript.LogError("loop", l.iteration, err); logErr != nil {
+				iterLog.Warn("failed to log error to transcript", "error", logErr)
+			}
+			if transErr := l.machine.Transition(StateFailed); transErr != nil {
+				iterLog.Warn("failed to transition to failed state", "error", transErr)
+			}
 			l.run.Manifest.SetState(run.StateFailed)
 			l.run.Manifest.Error = err.Error()
-			l.run.Save()
+			if saveErr := l.run.Save(); saveErr != nil {
+				iterLog.Warn("failed to save run", "error", saveErr)
+			}
 			return err
 		}
 
@@ -133,10 +169,14 @@ func (l *Loop) Run(ctx context.Context) error {
 	// Check if we hit max iterations
 	if l.iteration > l.cfg.MaxIterations {
 		l.log.Warn("max iterations reached", "iterations", l.cfg.MaxIterations)
-		l.machine.Transition(StateFailed)
+		if err := l.machine.Transition(StateFailed); err != nil {
+			l.log.Warn("failed to transition to failed state", "error", err)
+		}
 		l.run.Manifest.SetState(run.StateFailed)
 		l.run.Manifest.Error = "max iterations reached"
-		l.run.Save()
+		if err := l.run.Save(); err != nil {
+			l.log.Warn("failed to save run", "error", err)
+		}
 		return errors.New("max iterations reached")
 	}
 
@@ -145,10 +185,16 @@ func (l *Loop) Run(ctx context.Context) error {
 	l.log.Info("loop completed successfully",
 		"iterations", l.iteration,
 		"elapsed", elapsed)
-	l.machine.Transition(StateComplete)
+	if err := l.machine.Transition(StateComplete); err != nil {
+		l.log.Warn("failed to transition to complete state", "error", err)
+	}
 	l.run.Manifest.SetState(run.StateCompleted)
-	l.run.Transcript.LogEnd(run.StateCompleted, elapsed)
-	l.run.Save()
+	if err := l.run.Transcript.LogEnd(run.StateCompleted, elapsed); err != nil {
+		l.log.Warn("failed to log end to transcript", "error", err)
+	}
+	if err := l.run.Save(); err != nil {
+		l.log.Warn("failed to save run", "error", err)
+	}
 
 	return nil
 }
@@ -205,25 +251,33 @@ func (l *Loop) startAgents(ctx context.Context) error {
 			l.run.Manifest.CodexSessionID = l.secondary.SessionID()
 		}
 	}
-	l.run.Save()
+	if err := l.run.Save(); err != nil {
+		logger := slogutil.LoggerFromContext(ctx, slog.Default())
+		logger.Warn("failed to save run after starting agents", "error", err)
+	}
 
 	return nil
 }
 
 func (l *Loop) stopAgents(ctx context.Context) {
+	logger := slogutil.LoggerFromContext(ctx, slog.Default())
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		l.primary.Stop(ctx)
+		if err := l.primary.Stop(ctx); err != nil {
+			logger.Warn("failed to stop primary agent", "agent", l.primary.Name(), "error", err)
+		}
 	}()
 
 	if l.secondary != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			l.secondary.Stop(ctx)
+			if err := l.secondary.Stop(ctx); err != nil {
+				logger.Warn("failed to stop secondary agent", "agent", l.secondary.Name(), "error", err)
+			}
 		}()
 	}
 
@@ -270,7 +324,15 @@ func (l *Loop) MCPServerAddr() string {
 	return l.mcpServer.Addr()
 }
 
+// executeIteration runs one iteration of the agent loop.
+// Returns (true, nil) when the task is complete, (false, nil) to continue,
+// or (false, error) on critical failures.
+//
+// Critical errors (returned): agent execution failures, message draining failures.
+// Non-critical errors (logged): transcript logging, state transitions, run saves.
 func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
+	logger := slogutil.LoggerFromContext(ctx, slog.Default())
+
 	// Drain messages for primary agent
 	primaryMsgs, err := l.run.Bridge.DrainNew(ctx, l.primary.Name(), "")
 	if err != nil {
@@ -278,7 +340,9 @@ func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
 	}
 
 	// Execute primary agent
-	l.run.Transcript.LogExecute(l.primary.Name(), l.iteration, fmt.Sprintf("%d messages", len(primaryMsgs)))
+	if err := l.run.Transcript.LogExecute(l.primary.Name(), l.iteration, fmt.Sprintf("%d messages", len(primaryMsgs))); err != nil {
+		logger.Warn("failed to log execute to transcript", "error", err)
+	}
 	startTime := time.Now()
 
 	primaryResult, err := l.primary.Execute(ctx, primaryMsgs)
@@ -286,16 +350,22 @@ func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("primary agent execution failed: %w", err)
 	}
 
-	l.run.Transcript.LogResult(l.primary.Name(), l.iteration, primaryResult.Output, time.Since(startTime))
+	if err := l.run.Transcript.LogResult(l.primary.Name(), l.iteration, primaryResult.Output, time.Since(startTime)); err != nil {
+		logger.Warn("failed to log result to transcript", "error", err)
+	}
 
 	// Send result to bridge
 	resultMsg := bridge.NewResultMessage(l.primary.Name(), l.secondary.Name(), primaryResult.Output)
 	resultMsg.WithRunInfo(l.run.Manifest.ID, l.iteration)
-	l.run.Bridge.Send(ctx, resultMsg)
+	if _, err := l.run.Bridge.Send(ctx, resultMsg); err != nil {
+		logger.Warn("failed to send result to bridge", "error", err)
+	}
 
 	// Check for done signal from primary
 	if primaryResult.Done {
-		l.run.Transcript.LogSignal(l.primary.Name(), l.iteration, "DONE")
+		if err := l.run.Transcript.LogSignal(l.primary.Name(), l.iteration, "DONE"); err != nil {
+			logger.Warn("failed to log signal to transcript", "error", err)
+		}
 
 		// If no secondary (single-agent mode), we're done
 		if l.secondary == nil {
@@ -303,10 +373,16 @@ func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
 		}
 
 		// Transition to reviewing
-		l.machine.Transition(StateReviewing)
+		if err := l.machine.Transition(StateReviewing); err != nil {
+			logger.Warn("failed to transition to reviewing state", "error", err)
+		}
 		l.run.Manifest.SetState(run.StateReviewing)
-		l.run.Transcript.LogState(run.StateReviewing)
-		l.run.Save()
+		if err := l.run.Transcript.LogState(run.StateReviewing); err != nil {
+			logger.Warn("failed to log state to transcript", "error", err)
+		}
+		if err := l.run.Save(); err != nil {
+			logger.Warn("failed to save run", "error", err)
+		}
 	}
 
 	// If in single-agent mode, check for completion
@@ -320,7 +396,9 @@ func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("failed to drain secondary messages: %w", err)
 	}
 
-	l.run.Transcript.LogExecute(l.secondary.Name(), l.iteration, fmt.Sprintf("%d messages", len(secondaryMsgs)))
+	if err := l.run.Transcript.LogExecute(l.secondary.Name(), l.iteration, fmt.Sprintf("%d messages", len(secondaryMsgs))); err != nil {
+		logger.Warn("failed to log execute to transcript", "error", err)
+	}
 	startTime = time.Now()
 
 	secondaryResult, err := l.secondary.Execute(ctx, secondaryMsgs)
@@ -328,12 +406,16 @@ func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("secondary agent execution failed: %w", err)
 	}
 
-	l.run.Transcript.LogResult(l.secondary.Name(), l.iteration, secondaryResult.Output, time.Since(startTime))
+	if err := l.run.Transcript.LogResult(l.secondary.Name(), l.iteration, secondaryResult.Output, time.Since(startTime)); err != nil {
+		logger.Warn("failed to log result to transcript", "error", err)
+	}
 
 	// Send review result to bridge
 	reviewMsg := bridge.NewReviewMessage(l.secondary.Name(), l.primary.Name(), secondaryResult.Output)
 	reviewMsg.WithRunInfo(l.run.Manifest.ID, l.iteration)
-	l.run.Bridge.Send(ctx, reviewMsg)
+	if _, err := l.run.Bridge.Send(ctx, reviewMsg); err != nil {
+		logger.Warn("failed to send review to bridge", "error", err)
+	}
 
 	// Parse review signals
 	primaryReview := l.parser.Parse(primaryResult.Output)
@@ -356,10 +438,14 @@ func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
 
 	// Log signals
 	if primaryReview.Signal != review.SignalNone {
-		l.run.Transcript.LogSignal(l.primary.Name(), l.iteration, string(primaryReview.Signal))
+		if err := l.run.Transcript.LogSignal(l.primary.Name(), l.iteration, string(primaryReview.Signal)); err != nil {
+			logger.Warn("failed to log signal to transcript", "error", err)
+		}
 	}
 	if secondaryReview.Signal != review.SignalNone {
-		l.run.Transcript.LogSignal(l.secondary.Name(), l.iteration, string(secondaryReview.Signal))
+		if err := l.run.Transcript.LogSignal(l.secondary.Name(), l.iteration, string(secondaryReview.Signal)); err != nil {
+			logger.Warn("failed to log signal to transcript", "error", err)
+		}
 	}
 
 	// Check consensus result
@@ -370,15 +456,23 @@ func (l *Loop) executeIteration(ctx context.Context) (bool, error) {
 			return true, nil
 		}
 		// Continue working
-		l.machine.Transition(StateWorking)
+		if err := l.machine.Transition(StateWorking); err != nil {
+			logger.Warn("failed to transition to working state", "error", err)
+		}
 		l.run.Manifest.SetState(run.StateWorking)
-		l.run.Save()
+		if err := l.run.Save(); err != nil {
+			logger.Warn("failed to save run", "error", err)
+		}
 
 	case review.SignalFail:
 		// Review failed, continue iterating
-		l.machine.Transition(StateWorking)
+		if err := l.machine.Transition(StateWorking); err != nil {
+			logger.Warn("failed to transition to working state", "error", err)
+		}
 		l.run.Manifest.SetState(run.StateWorking)
-		l.run.Save()
+		if err := l.run.Save(); err != nil {
+			logger.Warn("failed to save run", "error", err)
+		}
 
 	case review.SignalPending:
 		// Waiting for more input, continue

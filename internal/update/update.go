@@ -133,10 +133,15 @@ func (u *Updater) Check(ctx context.Context) (*CheckResult, error) {
 
 func (u *Updater) recordCheck() {
 	dir := filepath.Dir(u.lastCheckFile)
-	os.MkdirAll(dir, 0755)
+	// Best-effort directory creation for update check timestamp
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return // Can't create dir, skip recording
+	}
 
 	data, _ := json.Marshal(time.Now())
-	os.WriteFile(u.lastCheckFile, data, 0644)
+	// Best-effort write for update check timestamp; not critical if it fails
+	// Using 0600 as recommended by gosec for sensitive file permissions
+	_ = os.WriteFile(u.lastCheckFile, data, 0600)
 }
 
 func (u *Updater) isNewer(latest, current string) bool {
@@ -234,8 +239,10 @@ func (u *Updater) Update(ctx context.Context, downloadURL string) error {
 
 	// Move new binary into place
 	if err := os.Rename(tmpPath, execPath); err != nil {
-		// Restore backup on failure
-		os.Rename(backupPath, execPath)
+		// Restore backup on failure; if restore fails, binary may be in inconsistent state
+		if restoreErr := os.Rename(backupPath, execPath); restoreErr != nil {
+			return fmt.Errorf("failed to install update: %w; additionally failed to restore backup: %v", err, restoreErr)
+		}
 		return fmt.Errorf("failed to install update: %w", err)
 	}
 

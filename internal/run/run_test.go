@@ -480,7 +480,9 @@ func TestManagerListActive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create failed: %v", err)
 	}
-	run1.Save()
+	if err := run1.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
 	run1.Close()
 
 	run2, err := manager.Create("completed task", cfg)
@@ -488,7 +490,9 @@ func TestManagerListActive(t *testing.T) {
 		t.Fatalf("Create failed: %v", err)
 	}
 	run2.Manifest.SetState(StateCompleted)
-	run2.Save()
+	if err := run2.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
 	run2.Close()
 
 	// ListActive should only return 1
@@ -517,7 +521,9 @@ func TestManagerFindBySessionID(t *testing.T) {
 	}
 	run.Manifest.ClaudeSessionID = "claude-abc123"
 	run.Manifest.CodexSessionID = "codex-xyz789"
-	run.Save()
+	if err := run.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
 	run.Close()
 
 	// Find by Claude session ID
@@ -575,9 +581,15 @@ func TestListAllRepos(t *testing.T) {
 
 	// Create some repo directories
 	runsDir := filepath.Join(baseDir, "runs")
-	os.MkdirAll(filepath.Join(runsDir, "repo1"), 0755)
-	os.MkdirAll(filepath.Join(runsDir, "repo2"), 0755)
-	os.MkdirAll(filepath.Join(runsDir, "repo3"), 0755)
+	if err := os.MkdirAll(filepath.Join(runsDir, "repo1"), 0755); err != nil {
+		t.Fatalf("MkdirAll failed: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(runsDir, "repo2"), 0755); err != nil {
+		t.Fatalf("MkdirAll failed: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(runsDir, "repo3"), 0755); err != nil {
+		t.Fatalf("MkdirAll failed: %v", err)
+	}
 
 	repos, err := ListAllRepos(paths)
 	if err != nil {
@@ -603,7 +615,9 @@ func TestListAllReposEmpty(t *testing.T) {
 func TestLoadManifestByPath(t *testing.T) {
 	dir := t.TempDir()
 	runDir := filepath.Join(dir, "1")
-	os.MkdirAll(runDir, 0755)
+	if err := os.MkdirAll(runDir, 0755); err != nil {
+		t.Fatalf("MkdirAll failed: %v", err)
+	}
 
 	manifest := NewManifest(1, "/test/repo", "test-id", "test prompt")
 	manifestPath := filepath.Join(runDir, "manifest.json")

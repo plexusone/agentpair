@@ -78,8 +78,12 @@ func TestReadAll(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := NewWriter(f)
-	w.Write(testRecord{Name: "a", Value: 1})
-	w.Write(testRecord{Name: "b", Value: 2})
+	if err := w.Write(testRecord{Name: "a", Value: 1}); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+	if err := w.Write(testRecord{Name: "b", Value: 2}); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
 	f.Close()
 
 	// Read all

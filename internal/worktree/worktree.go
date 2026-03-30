@@ -4,10 +4,13 @@ package worktree
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/grokify/mogo/log/slogutil"
 )
 
 // Worktree represents a git worktree.
@@ -81,14 +84,18 @@ func (w *Worktree) Remove(ctx context.Context, force bool) error {
 
 	// Also delete the branch if we created it
 	if w.created && w.branch != "" {
-		w.deleteBranch(ctx)
+		if err := w.deleteBranch(ctx); err != nil {
+			logger := slogutil.LoggerFromContext(ctx, slog.Default())
+			logger.Warn("failed to delete worktree branch", "branch", w.branch, "error", err)
+		}
 	}
 
 	return nil
 }
 
 func (w *Worktree) deleteBranch(ctx context.Context) error {
-	cmd := exec.CommandContext(ctx, "git", "branch", "-D", w.branch)
+	// G204: w.branch is intentionally user-provided for git worktree management
+	cmd := exec.CommandContext(ctx, "git", "branch", "-D", w.branch) //nolint:gosec
 	cmd.Dir = w.repoPath
 	return cmd.Run()
 }

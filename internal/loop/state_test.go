@@ -80,9 +80,15 @@ func TestMachineHistory(t *testing.T) {
 	}
 
 	// Make transitions
-	m.Transition(StateWorking)
-	m.Transition(StateReviewing)
-	m.Transition(StateComplete)
+	if err := m.Transition(StateWorking); err != nil {
+		t.Fatalf("Transition to working failed: %v", err)
+	}
+	if err := m.Transition(StateReviewing); err != nil {
+		t.Fatalf("Transition to reviewing failed: %v", err)
+	}
+	if err := m.Transition(StateComplete); err != nil {
+		t.Fatalf("Transition to complete failed: %v", err)
+	}
 
 	history := m.History()
 	expected := []State{StateInit, StateWorking, StateReviewing, StateComplete}

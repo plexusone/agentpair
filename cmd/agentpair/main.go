@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/grokify/mogo/log/slogutil"
 	"github.com/spf13/cobra"
 
 	"github.com/plexusone/agentpair/internal/agent"
@@ -220,15 +221,20 @@ func runMain(cmd *cobra.Command, args []string) error {
 		}
 		defer func() {
 			if wt.WasCreated() {
-				log.Debug("removing worktree", "path", wtPath)
-				wt.Remove(context.Background(), false)
+				logger := slogutil.LoggerFromContext(ctx, slog.Default())
+				logger.Debug("removing worktree", "path", wtPath)
+				if err := wt.Remove(context.Background(), false); err != nil {
+					logger.Warn("failed to remove worktree", "path", wtPath, "error", err)
+				}
 			}
 		}()
 
 		// Update working directory
 		cfg.RepoPath = wt.Path()
 		r.Manifest.WorktreePath = wt.Path()
-		r.Save()
+		if err := r.Save(); err != nil {
+			log.Warn("failed to save run manifest", "error", err)
+		}
 	}
 
 	// Handle tmux
@@ -253,7 +259,9 @@ func runMain(cmd *cobra.Command, args []string) error {
 		}
 
 		r.Manifest.TmuxSession = sessionName
-		r.Save()
+		if err := r.Save(); err != nil {
+			log.Warn("failed to save run manifest", "error", err)
+		}
 
 		fmt.Printf("Created tmux session: %s\n", sessionName)
 		fmt.Printf("Run 'tmux attach -t %s' to view\n", sessionName)

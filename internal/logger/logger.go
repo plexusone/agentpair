@@ -6,13 +6,8 @@ import (
 	"io"
 	"log/slog"
 	"os"
-)
 
-// contextKey is the type for context keys.
-type contextKey int
-
-const (
-	loggerKey contextKey = iota
+	"github.com/grokify/mogo/log/slogutil"
 )
 
 // New creates a new logger with the given options.
@@ -61,16 +56,13 @@ type Options struct {
 
 // NewContext returns a context with the logger attached.
 func NewContext(ctx context.Context, logger *slog.Logger) context.Context {
-	return context.WithValue(ctx, loggerKey, logger)
+	return slogutil.ContextWithLogger(ctx, logger)
 }
 
 // FromContext retrieves the logger from the context.
 // Returns the default logger if none is set.
 func FromContext(ctx context.Context) *slog.Logger {
-	if logger, ok := ctx.Value(loggerKey).(*slog.Logger); ok {
-		return logger
-	}
-	return slog.Default()
+	return slogutil.LoggerFromContext(ctx, slog.Default())
 }
 
 // With returns a logger with the given attributes added.

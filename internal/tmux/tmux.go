@@ -4,9 +4,12 @@ package tmux
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/grokify/mogo/log/slogutil"
 )
 
 // Session represents a tmux session.
@@ -26,7 +29,8 @@ func NewSession(name, workDir string) *Session {
 
 // Exists checks if the tmux session already exists.
 func (s *Session) Exists() bool {
-	cmd := exec.Command("tmux", "has-session", "-t", s.name)
+	// G204: s.name is intentionally user-provided for tmux session management
+	cmd := exec.Command("tmux", "has-session", "-t", s.name) //nolint:gosec
 	return cmd.Run() == nil
 }
 
@@ -37,7 +41,8 @@ func (s *Session) Create(ctx context.Context) error {
 	}
 
 	// Create new session (detached)
-	cmd := exec.CommandContext(ctx, "tmux", "new-session",
+	// G204: s.name and s.workDir are intentionally user-provided for tmux session management
+	cmd := exec.CommandContext(ctx, "tmux", "new-session", //nolint:gosec
 		"-d",         // detached
 		"-s", s.name, // session name
 		"-c", s.workDir, // working directory
@@ -52,8 +57,11 @@ func (s *Session) Create(ctx context.Context) error {
 
 // SetupLayout creates the side-by-side layout for Claude and Codex.
 func (s *Session) SetupLayout(ctx context.Context) error {
+	logger := slogutil.LoggerFromContext(ctx, slog.Default())
+
 	// Split window horizontally (side by side)
-	cmd := exec.CommandContext(ctx, "tmux", "split-window",
+	// G204: s.name and s.workDir are intentionally user-provided for tmux session management
+	cmd := exec.CommandContext(ctx, "tmux", "split-window", //nolint:gosec
 		"-h",         // horizontal split
 		"-t", s.name, // target session
 		"-c", s.workDir, // working directory
@@ -63,7 +71,8 @@ func (s *Session) SetupLayout(ctx context.Context) error {
 	}
 
 	// Select even-horizontal layout
-	cmd = exec.CommandContext(ctx, "tmux", "select-layout",
+	// G204: s.name is intentionally user-provided for tmux session management
+	cmd = exec.CommandContext(ctx, "tmux", "select-layout", //nolint:gosec
 		"-t", s.name,
 		"even-horizontal",
 	)
@@ -72,8 +81,12 @@ func (s *Session) SetupLayout(ctx context.Context) error {
 	}
 
 	// Rename panes for clarity
-	s.RenamePane(ctx, 0, "claude")
-	s.RenamePane(ctx, 1, "codex")
+	if err := s.RenamePane(ctx, 0, "claude"); err != nil {
+		logger.Warn("failed to rename claude pane", "error", err)
+	}
+	if err := s.RenamePane(ctx, 1, "codex"); err != nil {
+		logger.Warn("failed to rename codex pane", "error", err)
+	}
 
 	return nil
 }
@@ -109,14 +122,16 @@ func (s *Session) Attach(ctx context.Context) error {
 	// Check if we're already in tmux
 	if os.Getenv("TMUX") != "" {
 		// Switch to session
-		cmd := exec.CommandContext(ctx, "tmux", "switch-client",
+		// G204: s.name is intentionally user-provided for tmux session management
+		cmd := exec.CommandContext(ctx, "tmux", "switch-client", //nolint:gosec
 			"-t", s.name,
 		)
 		return cmd.Run()
 	}
 
 	// Attach to session
-	cmd := exec.CommandContext(ctx, "tmux", "attach-session",
+	// G204: s.name is intentionally user-provided for tmux session management
+	cmd := exec.CommandContext(ctx, "tmux", "attach-session", //nolint:gosec
 		"-t", s.name,
 	)
 	cmd.Stdin = os.Stdin
@@ -131,7 +146,8 @@ func (s *Session) Kill(ctx context.Context) error {
 		return nil
 	}
 
-	cmd := exec.CommandContext(ctx, "tmux", "kill-session",
+	// G204: s.name is intentionally user-provided for tmux session management
+	cmd := exec.CommandContext(ctx, "tmux", "kill-session", //nolint:gosec
 		"-t", s.name,
 	)
 	return cmd.Run()

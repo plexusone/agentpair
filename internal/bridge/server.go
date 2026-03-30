@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
-	"sync"
 
+	"github.com/grokify/mogo/log/slogutil"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -16,7 +17,6 @@ type Server struct {
 	server   *mcp.Server
 	listener net.Listener
 	addr     string
-	mu       sync.Mutex
 	done     chan struct{}
 }
 
@@ -149,7 +149,7 @@ func (s *Server) handleReceiveMessages(ctx context.Context, input receiveMessage
 	return textResult(text), nil, nil
 }
 
-func (s *Server) handleBridgeStatus(ctx context.Context) (*mcp.CallToolResult, any, error) {
+func (s *Server) handleBridgeStatus(_ context.Context) (*mcp.CallToolResult, any, error) {
 	status := s.bridge.Status()
 
 	text := fmt.Sprintf("Bridge Status:\n"+
@@ -228,7 +228,10 @@ func (s *Server) handleConn(ctx context.Context, conn net.Conn) {
 	}
 
 	// Run server session for this connection
-	s.server.Connect(ctx, transport, nil)
+	if _, err := s.server.Connect(ctx, transport, nil); err != nil {
+		logger := slogutil.LoggerFromContext(ctx, slog.Default())
+		logger.Debug("MCP connection ended", "error", err)
+	}
 }
 
 // Addr returns the server's listen address (useful when using ":0").

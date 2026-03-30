@@ -138,10 +138,18 @@ func TestBridgeStatus(t *testing.T) {
 	ctx := context.Background()
 
 	// Send various messages
-	b.Send(ctx, NewTaskMessage("system", "claude", "task"))
-	b.Send(ctx, NewResultMessage("claude", "codex", "result"))
-	b.Send(ctx, NewSignalMessage("codex", SignalPass, "approved"))
-	b.Send(ctx, NewSignalMessage("claude", SignalDone, "complete"))
+	if _, err := b.Send(ctx, NewTaskMessage("system", "claude", "task")); err != nil {
+		t.Fatalf("Send failed: %v", err)
+	}
+	if _, err := b.Send(ctx, NewResultMessage("claude", "codex", "result")); err != nil {
+		t.Fatalf("Send failed: %v", err)
+	}
+	if _, err := b.Send(ctx, NewSignalMessage("codex", SignalPass, "approved")); err != nil {
+		t.Fatalf("Send failed: %v", err)
+	}
+	if _, err := b.Send(ctx, NewSignalMessage("claude", SignalDone, "complete")); err != nil {
+		t.Fatalf("Send failed: %v", err)
+	}
 
 	status := b.Status()
 

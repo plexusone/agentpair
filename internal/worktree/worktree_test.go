@@ -90,7 +90,9 @@ func TestIsGitWorktree(t *testing.T) {
 
 	// Has .git directory (regular repo, not worktree)
 	gitDir := filepath.Join(dir, ".git")
-	os.Mkdir(gitDir, 0755)
+	if err := os.Mkdir(gitDir, 0755); err != nil {
+		t.Fatalf("Mkdir failed: %v", err)
+	}
 	if IsGitWorktree(dir) {
 		t.Error("directory with .git dir should not be detected as worktree")
 	}
@@ -98,7 +100,9 @@ func TestIsGitWorktree(t *testing.T) {
 	// Worktree has .git file (not directory)
 	dir2 := t.TempDir()
 	gitFile := filepath.Join(dir2, ".git")
-	os.WriteFile(gitFile, []byte("gitdir: /path/to/repo/.git/worktrees/xyz"), 0644)
+	if err := os.WriteFile(gitFile, []byte("gitdir: /path/to/repo/.git/worktrees/xyz"), 0600); err != nil {
+		t.Fatalf("WriteFile failed: %v", err)
+	}
 	if !IsGitWorktree(dir2) {
 		t.Error("directory with .git file should be detected as worktree")
 	}
@@ -177,7 +181,9 @@ func TestGetRepoRoot(t *testing.T) {
 
 	// Create a subdirectory
 	subDir := filepath.Join(repoDir, "subdir")
-	os.Mkdir(subDir, 0755)
+	if err := os.Mkdir(subDir, 0755); err != nil {
+		t.Fatalf("Mkdir failed: %v", err)
+	}
 
 	root, err := GetRepoRoot(subDir)
 	if err != nil {
@@ -204,9 +210,13 @@ func TestListWorktrees(t *testing.T) {
 
 	// Configure git user for commits
 	cmd = exec.Command("git", "-C", repoDir, "config", "user.email", "test@example.com")
-	cmd.Run()
+	if err := cmd.Run(); err != nil {
+		t.Skipf("failed to configure git email: %v", err)
+	}
 	cmd = exec.Command("git", "-C", repoDir, "config", "user.name", "Test User")
-	cmd.Run()
+	if err := cmd.Run(); err != nil {
+		t.Skipf("failed to configure git user: %v", err)
+	}
 
 	// Create initial commit (required for worktrees)
 	cmd = exec.Command("git", "-C", repoDir, "commit", "--allow-empty", "-m", "Initial commit")
