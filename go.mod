@@ -1,10 +1,10 @@
 module github.com/plexusone/agentpair
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/coder/websocket v1.8.14
-	github.com/grokify/mogo v0.74.0
+	github.com/grokify/mogo v0.74.1
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/spf13/cobra v1.10.2
 	go.yaml.in/yaml/v3 v3.0.4
