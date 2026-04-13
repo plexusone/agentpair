@@ -35,19 +35,19 @@ agentpair --claude-only "Refactor the logging system"
 ## How It Works
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    AgentPair Loop                        │
-│                                                          │
-│   ┌─────────┐  bridge.jsonl  ┌─────────┐               │
-│   │  Claude │◄──────────────►│  Codex  │               │
-│   │  (work) │                │(review) │               │
-│   └────┬────┘                └────┬────┘               │
-│        │                          │                     │
-│        └──────────┬───────────────┘                     │
-│                   │                                      │
-│              State Machine                               │
-│        init → working → reviewing → complete            │
-└─────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│                AgentPair Loop              │
+│                                            │
+│   ┌─────────┐  bridge.jsonl  ┌─────────┐   │
+│   │  Claude │<──────────────>│  Codex  │   │
+│   │  (work) │                │(review) │   │
+│   └────┬────┘                └────┬────┘   │
+│        │                          │        │
+│        └──────────┬───────────────┘        │
+│                   │                        │
+│              State Machine                 │
+│   init → working → reviewing → complete    │
+└────────────────────────────────────────────┘
 ```
 
 1. Primary agent (Codex by default) works on the task
