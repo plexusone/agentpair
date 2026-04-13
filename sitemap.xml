@@ -2,70 +2,70 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://plexusone.github.io/agentpair/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/concepts/architecture/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/concepts/bridge/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/concepts/mcp/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/concepts/state-machine/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/getting-started/configuration/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/getting-started/installation/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/getting-started/quick-start/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/guides/paired-sessions/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/guides/resuming/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/guides/single-agent/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/guides/tmux/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/guides/worktrees/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/reference/cli/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/reference/config/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/reference/messages/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://plexusone.github.io/agentpair/releases/v0.1.0/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
 </urlset>
